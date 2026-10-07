@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# SDD artifacts — never reformat source-of-truth docs
+openspec/
+task.md
+.atl/
