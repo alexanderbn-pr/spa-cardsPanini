@@ -26,5 +26,24 @@ export default defineConfig([
       "react-refresh/only-export-components": "off",
     },
   },
+  {
+    // Design §6 layer guard (task 9.3 / R-XC-04): features never import
+    // features — cross-feature composition happens ONLY in App.tsx.
+    files: ["src/features/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/features/*", "@/features/**"],
+              message:
+                "features must not import features — compose in App.tsx (design §6).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier, // MUST be LAST: disables conflicting style rules
 ]);
