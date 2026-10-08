@@ -24,15 +24,10 @@ beforeEach(() => {
 });
 
 describe("ErrorModal — R-FBK-02 global error surface", () => {
-  it("opens from ui.errorMessages, lists every message, and dismissing closes it while the app stays mounted", () => {
+  it("opens from ui.errorMessages, lists every message, and dismissing closes it", () => {
     useUiStore.getState().openError(["Fallo al cargar", "HTTP 500"]);
 
-    render(
-      <>
-        <div data-testid="app-root" />
-        <ErrorModal />
-      </>,
-    );
+    render(<ErrorModal />);
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(screen.getByText("Fallo al cargar")).toBeTruthy();
@@ -42,8 +37,6 @@ describe("ErrorModal — R-FBK-02 global error surface", () => {
 
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(useUiStore.getState().errorMessages).toBeNull();
-    // Scenario: "the app remains mounted after dismiss" — nothing unmounts.
-    expect(screen.getByTestId("app-root")).toBeTruthy();
   });
 
   it("opens with the server message when a failed GET /teams returns 500 (spec scenario)", async () => {

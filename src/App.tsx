@@ -1,7 +1,9 @@
 import { lazy, Suspense, useState } from "react";
+import { useLocation } from "react-router";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { PATHS, RequireAuth, RequireGuest, RootRedirect } from "@/app/routes";
 import ErrorModal from "@/components/error-modal/ErrorModal";
+import RouteErrorBoundary from "@/components/error-boundary/RouteErrorBoundary";
 import AlbumSkeleton from "@/components/skeletons/AlbumSkeleton";
 import FiltersSection from "@/features/filters/FiltersSection";
 import type { AppliedFilters } from "@/types/filters";
@@ -32,6 +34,7 @@ const MainScreen = lazy(() => import("@/features/stickers/MainScreen"));
  */
 export function AppRoutes() {
   const [applied, setApplied] = useState<AppliedFilters | null>(null);
+  const { pathname } = useLocation();
 
   return (
     <Routes>
@@ -56,10 +59,12 @@ export function AppRoutes() {
                 data-testid="main-screen"
                 className="mx-auto w-full max-w-[1200px] px-lg py-xl"
               >
-                <FiltersSection applied={applied} onApply={setApplied} />
-                <Suspense fallback={<AlbumSkeleton />}>
-                  <MainScreen applied={applied} />
-                </Suspense>
+                <RouteErrorBoundary resetKey={pathname}>
+                  <FiltersSection applied={applied} onApply={setApplied} />
+                  <Suspense fallback={<AlbumSkeleton />}>
+                    <MainScreen applied={applied} />
+                  </Suspense>
+                </RouteErrorBoundary>
               </main>
               <ErrorModal />
             </div>
