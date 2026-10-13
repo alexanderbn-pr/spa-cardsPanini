@@ -3,6 +3,12 @@ import { z } from "zod";
 /** The API returns ids as either numbers or strings depending on the resource. */
 const IdSchema = z.union([z.string(), z.number()]);
 
+export const EditionSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+  abbreviation: z.string(),
+});
+export type Edition = z.infer<typeof EditionSchema>;
+
 export const StickerSchema = z.object({
   id: IdSchema,
   /** Zero-padded code ("001") — kept as string, rendered as-is. */
@@ -14,6 +20,8 @@ export const StickerSchema = z.object({
   check: z.boolean(),
   /** Server-owned: only mutated via `PATCH {delta}`. */
   quantity: z.number(),
+  editionId: IdSchema.nullish(),
+  abbreviation: z.string().nullish(),
 });
 export type Sticker = z.infer<typeof StickerSchema>;
 
@@ -67,6 +75,7 @@ export const CreateStickerBodySchema = z.object({
     .pipe(z.number().int().positive()),
   quantity: z.number().int().min(0).default(0),
   check: z.boolean().default(false),
+  editionId: IdSchema.nullish().optional(),
 });
 export type CreateStickerBody = z.infer<typeof CreateStickerBodySchema>;
 

@@ -323,6 +323,15 @@ describe("Create sticker flow — R-CRT-06/07 (App integration)", () => {
   function stubAlbum(createStatus: number, createBody: unknown) {
     fetchMock.mockImplementation((url: unknown) => {
       const target = String(url);
+      if (target.includes("/editions")) {
+        return Promise.resolve(
+          jsonResponse(200, [
+            { id: 1, abbreviation: "1" },
+            { id: 2, abbreviation: "2" },
+            { id: 3, abbreviation: "3" },
+          ]),
+        );
+      }
       if (target.includes("/stickers/create")) {
         return Promise.resolve(jsonResponse(createStatus, createBody));
       }
@@ -355,6 +364,9 @@ describe("Create sticker flow — R-CRT-06/07 (App integration)", () => {
     });
     fireEvent.change(getByLabelText("Posición"), {
       target: { value: "10" },
+    });
+    fireEvent.change(getByLabelText("Edición"), {
+      target: { value: "2" },
     });
   }
 

@@ -5,5 +5,6 @@ export const queryKeys = {
   teams: ["teams"] as const,
   stickers: (filters: StickersFilters, page: number) =>
     ["stickers", filters, page] as const,
+  editions: ["editions"] as const,
   positions: ["positions"] as const,
 } as const;

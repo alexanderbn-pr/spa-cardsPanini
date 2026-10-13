@@ -3,6 +3,7 @@ import { apiFetch } from "./client";
 import { buildStickersQuery, type StickersFilters } from "./query-string";
 import {
   AuthResponseSchema,
+  EditionSchema,
   PositionSchema,
   StickerSchema,
   TeamSchema,
@@ -11,6 +12,7 @@ import {
 import type {
   AuthResponse,
   CreateStickerRequest,
+  Edition,
   Position,
   Sticker,
   Team,
@@ -85,6 +87,10 @@ export function patchSticker(
     schema: StickerSchema,
     signal,
   });
+}
+
+export function getEditions(signal?: AbortSignal): Promise<Edition[]> {
+  return apiFetch("/editions", { schema: z.array(EditionSchema), signal });
 }
 
 export function getPositions(signal?: AbortSignal): Promise<Position[]> {

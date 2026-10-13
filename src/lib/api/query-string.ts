@@ -7,6 +7,7 @@ export interface StickersFilters {
   check?: boolean;
   /** Exact-match only on the API (no gt operator) — never used for "repetidos". */
   quantity?: number;
+  editionId?: string | number;
 }
 
 /**
@@ -35,6 +36,9 @@ export function buildStickersQuery(
   }
   if (filters.quantity !== undefined) {
     params.set("quantity", String(filters.quantity));
+  }
+  if (filters.editionId !== undefined && filters.editionId !== "") {
+    params.set("editionId", String(filters.editionId));
   }
 
   return `?${params.toString()}`;

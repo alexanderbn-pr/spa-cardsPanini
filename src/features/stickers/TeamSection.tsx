@@ -49,7 +49,7 @@ export default function TeamSection({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-md pt-lg md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-md pt-lg md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {ordered.map((sticker) => (
           <StickerCard key={sticker.id} sticker={sticker} />
         ))}

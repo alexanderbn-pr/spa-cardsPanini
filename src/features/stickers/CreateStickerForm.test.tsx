@@ -68,6 +68,15 @@ beforeEach(() => {
   fetchMock.mockReset();
   fetchMock.mockImplementation((url: unknown) => {
     const target = String(url);
+    if (target.includes("/editions")) {
+      return Promise.resolve(
+        jsonResponse(200, [
+          { id: 1, abbreviation: "1" },
+          { id: 2, abbreviation: "2" },
+          { id: 3, abbreviation: "3" },
+        ]),
+      );
+    }
     if (target.includes("/stickers/create")) {
       return Promise.resolve(jsonResponse(201, createdSticker));
     }
@@ -98,12 +107,10 @@ describe("CreateStickerForm — R-CRT-03 defaults & options", () => {
     expect((screen.getByLabelText("Posición") as HTMLSelectElement).value).toBe(
       "",
     );
-    expect((screen.getByLabelText("Cantidad") as HTMLInputElement).value).toBe(
-      "0",
+    // Edición also starts empty / Todos.
+    expect((screen.getByLabelText("Edición") as HTMLSelectElement).value).toBe(
+      "",
     );
-    expect(
-      (screen.getByLabelText("Conseguido") as HTMLInputElement).checked,
-    ).toBe(false);
 
     expect(
       within(screen.getByLabelText("Equipo"))
@@ -115,11 +122,16 @@ describe("CreateStickerForm — R-CRT-03 defaults & options", () => {
         .getAllByRole("option")
         .map((option) => option.textContent),
     ).toEqual(["Selecciona posición", "Delantero"]);
+    expect(
+      within(screen.getByLabelText("Edición"))
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Selecciona edición", "1", "2", "3"]);
   });
 });
 
 describe("CreateStickerForm — R-CRT-04 validation policy", () => {
-  it("keeps Save disabled until number, name, idTeam and positionId are all non-empty", async () => {
+  it("keeps Save disabled until number, name, idTeam, positionId and editionId are all non-empty", async () => {
     renderForm();
     await waitForForm();
 
@@ -132,7 +144,7 @@ describe("CreateStickerForm — R-CRT-04 validation policy", () => {
     fireEvent.change(screen.getByLabelText("Nombre"), {
       target: { value: "Lionel" },
     });
-    // Still missing both FK selects.
+    // Still missing both FK selects and edition.
     expect((save() as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.change(screen.getByLabelText("Equipo"), {
@@ -140,6 +152,10 @@ describe("CreateStickerForm — R-CRT-04 validation policy", () => {
     });
     fireEvent.change(screen.getByLabelText("Posición"), {
       target: { value: "10" },
+    });
+    // Select an edition to enable Save.
+    fireEvent.change(screen.getByLabelText("Edición"), {
+      target: { value: "2" },
     });
     expect((save() as HTMLButtonElement).disabled).toBe(false);
   });
@@ -156,7 +172,8 @@ describe("CreateStickerForm — R-CRT-04 validation policy", () => {
     expect(screen.getByText("El nombre es obligatorio")).toBeTruthy();
     expect(screen.getByText("Selecciona un equipo")).toBeTruthy();
     expect(screen.getByText("Selecciona una posición")).toBeTruthy();
-    expect(screen.getAllByRole("alert")).toHaveLength(4);
+    expect(screen.getByText("Selecciona una edición")).toBeTruthy();
+    expect(screen.getAllByRole("alert")).toHaveLength(5);
 
     // R-CRT-04: invalid fires NO request (mutation never called).
     expect(createCalls()).toHaveLength(0);
@@ -164,7 +181,7 @@ describe("CreateStickerForm — R-CRT-04 validation policy", () => {
 });
 
 describe("CreateStickerForm — R-CRT-05 valid submit", () => {
-  it("submits the coerced {sticker, idTeam} body keeping number a string, then calls onCreated", async () => {
+  it("submits the coerced {sticker, idTeam, editionId} body keeping number a string, then calls onCreated", async () => {
     const { onCreated } = renderForm();
     await waitForForm();
 
@@ -180,6 +197,9 @@ describe("CreateStickerForm — R-CRT-05 valid submit", () => {
     fireEvent.change(screen.getByLabelText("Posición"), {
       target: { value: "10" },
     });
+    fireEvent.change(screen.getByLabelText("Edición"), {
+      target: { value: "2" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => expect(createCalls()).toHaveLength(1));
@@ -192,6 +212,7 @@ describe("CreateStickerForm — R-CRT-05 valid submit", () => {
         positionId: 10,
         quantity: 0,
         check: false,
+        editionId: "2",
       },
       idTeam: 1,
     });
@@ -229,6 +250,9 @@ describe("CreateStickerForm — R-CRT-05 valid submit", () => {
     });
     fireEvent.change(screen.getByLabelText("Posición"), {
       target: { value: "10" },
+    });
+    fireEvent.change(screen.getByLabelText("Edición"), {
+      target: { value: "2" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 

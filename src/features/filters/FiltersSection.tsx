@@ -6,6 +6,7 @@ import FilterBarSkeleton from "@/components/skeletons/FilterBarSkeleton";
 import { useFilterDraft } from "@/hooks/useFilterDraft";
 import { usePositionsQuery } from "@/hooks/usePositionsQuery";
 import { useTeamsQuery } from "@/hooks/useTeamsQuery";
+import { useEditionsQuery } from "@/hooks/useEditionsQuery";
 import {
   EMPTY_FILTERS,
   type AppliedFilters,
@@ -81,6 +82,7 @@ function FilterControls({
 }: FilterControlsProps) {
   const { data: teams } = useTeamsQuery();
   const { data: positions } = usePositionsQuery();
+  const { data: editions, isLoading } = useEditionsQuery();
 
   return (
     <div className="grid grid-cols-1 gap-md md:grid-cols-2 lg:flex lg:items-end">
@@ -120,6 +122,23 @@ function FilterControls({
           {positions.map((position) => (
             <option key={position.id} value={String(position.id)}>
               {position.name}
+            </option>
+          ))}
+        </Select>
+      </label>
+
+      <label className="flex flex-col gap-xs">
+        <span className="text-[13px] text-muted-foreground">Edición</span>
+        <Select
+          aria-label="Edición"
+          value={draft.editionId}
+          onChange={(event) => setFields({ editionId: event.target.value })}
+          disabled={isLoading}
+        >
+          <option value="">Todos</option>
+          {editions?.map((edition) => (
+            <option key={edition.id} value={String(edition.id)}>
+              {edition.abbreviation}
             </option>
           ))}
         </Select>

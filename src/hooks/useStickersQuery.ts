@@ -12,14 +12,16 @@ const MAX_PAGES = 10;
 /**
  * Applied → server query. `repetidos` is STRIPPED here on purpose: the API
  * `quantity` param is exact-match (no gt operator), so "repetidos" is a
- * CLIENT-SIDE `quantity > 1` predicate (R-FLT-04) and must never reach the URL
- * or the query key — toggling it alone reuses the same cache entry (RK-2/§4).
+ * CLIENT-SIDE `quantity > 1` predicate (R-FLT-04) and must never reach the
+ * URL or the query key — toggling it alone reuses the same cache entry (RK-2/§4).
+ * Additionally, `editionId` is serialized when present.
  */
 export function toServerFilters(applied: AppliedFilters): StickersFilters {
   const server: StickersFilters = {};
   if (applied.name) server.name = applied.name;
   if (applied.teamId) server.teamId = applied.teamId;
   if (applied.positionId) server.positionId = applied.positionId;
+  if (applied.editionId) server.editionId = applied.editionId;
   if (applied.check !== undefined) server.check = applied.check;
   return server;
 }

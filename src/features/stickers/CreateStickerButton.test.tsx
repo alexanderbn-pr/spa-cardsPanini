@@ -48,6 +48,15 @@ beforeEach(() => {
   fetchMock.mockReset();
   fetchMock.mockImplementation((url: unknown) => {
     const target = String(url);
+    if (target.includes("/editions")) {
+      return Promise.resolve(
+        jsonResponse(200, [
+          { id: 1, abbreviation: "1" },
+          { id: 2, abbreviation: "2" },
+          { id: 3, abbreviation: "3" },
+        ]),
+      );
+    }
     if (target.includes("/stickers/create")) {
       return Promise.resolve(jsonResponse(201, createdSticker));
     }
@@ -95,6 +104,9 @@ describe("CreateStickerButton — R-CRT-06 close on success", () => {
     });
     fireEvent.change(screen.getByLabelText("Posición"), {
       target: { value: "10" },
+    });
+    fireEvent.change(screen.getByLabelText("Edición"), {
+      target: { value: "2" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 

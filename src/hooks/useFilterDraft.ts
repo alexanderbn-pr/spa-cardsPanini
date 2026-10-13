@@ -10,6 +10,7 @@ function toDraft(applied: AppliedFilters): FilterDraft {
       applied.positionId === undefined ? "" : String(applied.positionId),
     check: applied.check === undefined ? "" : applied.check ? "true" : "false",
     repetidos: applied.repetidos,
+    editionId: applied.editionId === undefined ? "" : String(applied.editionId),
   };
 }
 
@@ -21,6 +22,7 @@ function toApplied(draft: FilterDraft): AppliedFilters {
     ...(draft.teamId ? { teamId: draft.teamId } : {}),
     ...(draft.positionId ? { positionId: draft.positionId } : {}),
     ...(draft.check !== "" ? { check: draft.check === "true" } : {}),
+    ...(draft.editionId !== "" ? { editionId: draft.editionId } : {}),
     repetidos: draft.repetidos,
   };
 }

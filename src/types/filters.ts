@@ -18,6 +18,7 @@ export interface FilterDraft {
   positionId: string;
   check: "" | "true" | "false";
   repetidos: boolean;
+  editionId: string; // "" = "Todos", empty = no filter
 }
 
 /**
@@ -30,12 +31,16 @@ export interface AppliedFilters {
   teamId?: string;
   positionId?: string;
   check?: boolean;
+  editionId?: string; // <-- NEW
   /** Client-side `quantity > 1` predicate — never serialized into the query. */
   repetidos: boolean;
 }
 
 /** Fresh session: nothing applied → the default teams view renders (R-ALB-01). */
-export const EMPTY_FILTERS: AppliedFilters = { repetidos: false };
+export const EMPTY_FILTERS: AppliedFilters = {
+  repetidos: false,
+  editionId: "",
+};
 
 /** All controls untouched — the value "Aplicar filtros" is clicked on a pristine bar. */
 export const EMPTY_DRAFT: FilterDraft = {
@@ -44,4 +49,5 @@ export const EMPTY_DRAFT: FilterDraft = {
   positionId: "",
   check: "",
   repetidos: false,
+  editionId: "",
 };

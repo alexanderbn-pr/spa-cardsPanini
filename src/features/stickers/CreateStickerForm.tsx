@@ -6,6 +6,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useCreateSticker } from "@/hooks/useCreateSticker";
+import { useEditionsQuery } from "@/hooks/useEditionsQuery";
 import { usePositionsQuery } from "@/hooks/usePositionsQuery";
 import { useTeamsQuery } from "@/hooks/useTeamsQuery";
 import type { CreateStickerRequest } from "@/types/api";
@@ -21,6 +22,7 @@ export const CreateStickerFormSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio"),
   idTeam: z.string().min(1, "Selecciona un equipo"),
   positionId: z.string().min(1, "Selecciona una posición"),
+  editionId: z.string().min(1, "Selecciona una edición"),
   quantity: z.string().optional(),
   check: z.boolean().optional(),
 });
@@ -42,6 +44,7 @@ export function toRequest(
       positionId: Number(values.positionId),
       quantity: Number.isFinite(quantity) ? quantity : 0,
       check: values.check ?? false,
+      editionId: values.editionId,
     },
     idTeam: Number(values.idTeam),
   };
@@ -55,7 +58,7 @@ interface CreateStickerFormProps {
 }
 
 type FieldErrors = Partial<
-  Record<"number" | "name" | "idTeam" | "positionId", string>
+  Record<"number" | "name" | "idTeam" | "positionId" | "editionId", string>
 >;
 
 const INITIAL_VALUES: CreateStickerFormValues = {
@@ -63,6 +66,7 @@ const INITIAL_VALUES: CreateStickerFormValues = {
   name: "",
   idTeam: "",
   positionId: "",
+  editionId: "",
   quantity: "0",
   check: false,
 };
@@ -81,6 +85,7 @@ export default function CreateStickerForm({
 }: CreateStickerFormProps) {
   const { data: teams } = useTeamsQuery();
   const { data: positions } = usePositionsQuery();
+  const { data: editions } = useEditionsQuery();
   const mutation = useCreateSticker();
 
   const [values, setValues] = useState<CreateStickerFormValues>(INITIAL_VALUES);
@@ -110,7 +115,8 @@ export default function CreateStickerForm({
     values.number.trim() !== "" &&
     values.name.trim() !== "" &&
     values.idTeam !== "" &&
-    values.positionId !== "";
+    values.positionId !== "" &&
+    values.editionId !== "";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -124,6 +130,7 @@ export default function CreateStickerForm({
         name: fieldErrors.name?.[0],
         idTeam: fieldErrors.idTeam?.[0],
         positionId: fieldErrors.positionId?.[0],
+        editionId: fieldErrors.editionId?.[0],
       });
       return;
     }
@@ -187,6 +194,25 @@ export default function CreateStickerForm({
           {positions.map((position) => (
             <option key={position.id} value={String(position.id)}>
               {position.name}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+
+      <FormField
+        label="Edición"
+        htmlFor="create-edition"
+        error={errors.editionId}
+      >
+        <Select
+          id="create-edition"
+          value={values.editionId}
+          onChange={(event) => update({ editionId: event.target.value })}
+        >
+          <option value="">Selecciona edición</option>
+          {editions?.map((edition) => (
+            <option key={edition.id} value={String(edition.id)}>
+              {edition.abbreviation}
             </option>
           ))}
         </Select>

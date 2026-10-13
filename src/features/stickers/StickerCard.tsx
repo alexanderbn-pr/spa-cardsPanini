@@ -13,7 +13,7 @@ import type { Sticker } from "@/types/api";
  */
 export default function StickerCard({ sticker }: { sticker: Sticker }) {
   const patch = usePatchSticker();
-  const { id, number, name, quantity, check } = sticker;
+  const { id, number, name, quantity, check, editionId } = sticker;
 
   function increment() {
     patch.mutate({ id, delta: 1 });
@@ -31,6 +31,41 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
     }
   }
 
+  // Edition badge: 1=skip, 2=green border+bullet, 3=blue border+bullet
+  let editionBorderClass = "";
+  let editionBullet: React.ReactNode | null = null;
+  // Read the abbreviation from the sticker data (may be nullish)
+  const abbreviation = sticker.editionId;
+
+  if (editionId === 2) {
+    editionBorderClass = "border-green-500";
+    editionBullet = (
+      <span
+        key="edition-bullets"
+        className="rounded-full px-2 text-[11px] bg-green-500 ml-1"
+      >{abbreviation}</span>
+    );
+  } else if (editionId === 3) {
+    editionBorderClass = "border-blue-500";
+    editionBullet = (
+      <span
+        key="edition-bullets"
+        className="rounded-full px-2 text-[11px] bg-blue-500 ml-1"
+      >      {abbreviation}</span>
+
+    );
+  }
+  // editionId === "1" → skip badge entirely (no border, no bullet)
+
+  // Build className: base + edition border (outermost) + check border (beneath)
+  const baseClasses = [
+    "relative min-h-24 cursor-pointer rounded-md border p-md transition-colors",
+    "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+  ];
+  const checkClasses = check
+    ? "border-success bg-success/8"
+    : "border-[var(--color-hairline)] bg-surface-elevated";
+
   return (
     <div
       role="button"
@@ -38,15 +73,14 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
       aria-label={`Sticker ${number} ${name}`}
       onClick={increment}
       onKeyDown={handleKeyDown}
-      className={[
-        "relative min-h-24 cursor-pointer rounded-md border p-md transition-colors",
-        "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-        check
-          ? "border-success bg-success/8"
-          : "border-[var(--color-hairline)] bg-surface-elevated",
-      ].join(" ")}
+      className={[...baseClasses, checkClasses]
+        .filter((c) => c !== "")
+        .join(" ")}
     >
-      <span className="block text-[13px] text-muted-foreground">{number}</span>
+      <div className="flex flex-row gap-sm">
+        <span className="block text-[13px] text-muted-foreground">{number}</span>
+        {editionBullet}
+      </div>
       <span className="block truncate text-sm font-medium">{name}</span>
       <span className="mt-sm inline-flex items-center rounded-full border border-[var(--color-hairline)] px-2 text-[13px]">
         ×{quantity}

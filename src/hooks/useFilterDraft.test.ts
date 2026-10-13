@@ -20,6 +20,7 @@ describe("useFilterDraft — drafts independent of applied (R-FLT-02)", () => {
       positionId: "",
       check: "true",
       repetidos: false,
+      editionId: "",
     });
   });
 
@@ -31,7 +32,7 @@ describe("useFilterDraft — drafts independent of applied (R-FLT-02)", () => {
 
     // WHY: typing without clicking "Aplicar filtros" must never reach the query
     // key — the prop object is untouched and apply() has not run yet.
-    expect(committed).toEqual({ repetidos: false });
+    expect(committed).toEqual({ editionId: "", repetidos: false });
     expect(result.current.draft.name).toBe("Lewandowski");
   });
 
@@ -66,6 +67,7 @@ describe("useFilterDraft — drafts independent of applied (R-FLT-02)", () => {
       positionId: "",
       check: "true",
       repetidos: true,
+      editionId: "",
     });
   });
 
@@ -87,6 +89,7 @@ describe("useFilterDraft — drafts independent of applied (R-FLT-02)", () => {
       positionId: "11",
       check: "false",
       repetidos: true,
+      editionId: "",
     });
   });
 });
