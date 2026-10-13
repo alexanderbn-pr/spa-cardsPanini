@@ -31,14 +31,11 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
     }
   }
 
-  // Edition badge: 1=skip, 2=green border+bullet, 3=blue border+bullet
-  let editionBorderClass = "";
   let editionBullet: React.ReactNode | null = null;
   // Read the abbreviation from the sticker data (may be nullish)
   const abbreviation = sticker.editionId;
 
   if (editionId === 2) {
-    editionBorderClass = "border-green-500";
     editionBullet = (
       <span
         key="edition-bullets"
@@ -46,7 +43,6 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
       >{abbreviation}</span>
     );
   } else if (editionId === 3) {
-    editionBorderClass = "border-blue-500";
     editionBullet = (
       <span
         key="edition-bullets"
