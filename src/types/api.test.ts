@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   AuthResponseSchema,
+  CreateStickerBodySchema,
+  CreateStickerRequestSchema,
   ErrorResponseSchema,
   PositionSchema,
   StickerSchema,
@@ -69,6 +71,15 @@ describe("API schemas validate the pinned contract at the boundary", () => {
     ).toBe(true);
   });
 
+  it("rejects a sticker without quantity so contract drift cannot silently reach the UI (repeat guard)", () => {
+    // Triangulation partner for the parser above: the SAME schema must reject a
+    // different malformed shape, proving the result is not hardcoded.
+    expect(
+      StickerSchema.safeParse({ id: 7, number: "001", name: "Ronaldo" })
+        .success,
+    ).toBe(false);
+  });
+
   it("parses the pinned 400 validation envelope {message, formErrors, fieldErrors.body}", () => {
     const envelope = {
       message: "Validation failed",
@@ -83,5 +94,69 @@ describe("API schemas validate the pinned contract at the boundary", () => {
       expect(parsed.data.errors.formErrors).toEqual(["form problem"]);
       expect(parsed.data.errors.fieldErrors.body).toEqual(["email inválido"]);
     }
+  });
+});
+
+describe("CreateSticker schemas — R-CRT-05 request contract", () => {
+  it("accepts a valid request, coerces a string positionId to a positive int, and defaults quantity=0/check=false", () => {
+    const parsed = CreateStickerRequestSchema.safeParse({
+      sticker: { number: "007", name: "Lionel", positionId: "3" },
+      idTeam: 1,
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.sticker.number).toBe("007");
+      expect(parsed.data.sticker.positionId).toBe(3);
+      expect(parsed.data.sticker.quantity).toBe(0);
+      expect(parsed.data.sticker.check).toBe(false);
+      expect(parsed.data.idTeam).toBe(1);
+    }
+  });
+
+  it("keeps explicit quantity/check when provided (triangulation on defaults)", () => {
+    const parsed = CreateStickerBodySchema.safeParse({
+      number: "001",
+      name: "Andrés",
+      positionId: 2,
+      quantity: 5,
+      check: true,
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.quantity).toBe(5);
+      expect(parsed.data.check).toBe(true);
+    }
+  });
+
+  it("rejects positionId 0 or negative — a position FK must be a positive integer", () => {
+    expect(
+      CreateStickerBodySchema.safeParse({
+        number: "001",
+        name: "x",
+        positionId: 0,
+      }).success,
+    ).toBe(false);
+    expect(
+      CreateStickerBodySchema.safeParse({
+        number: "001",
+        name: "x",
+        positionId: -2,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a missing or empty number — a sticker must carry its number (R-CRT-03)", () => {
+    expect(
+      CreateStickerBodySchema.safeParse({ name: "x", positionId: 1 }).success,
+    ).toBe(false);
+    expect(
+      CreateStickerBodySchema.safeParse({
+        number: "",
+        name: "x",
+        positionId: 1,
+      }).success,
+    ).toBe(false);
   });
 });

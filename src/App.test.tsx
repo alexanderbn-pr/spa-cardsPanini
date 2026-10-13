@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router";
@@ -269,6 +270,140 @@ describe("Limpiar filtros — R-FLT-05 (App integration, ADR-3)", () => {
     expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy();
     expect((screen.getByLabelText("Jugador") as HTMLInputElement).value).toBe(
       "",
+    );
+  });
+});
+
+describe("Global Crear sticker button — R-CRT-01 mount", () => {
+  it("renders exactly ONE 'Crear sticker' button on authed /stickers", async () => {
+    useAuthStore.setState({ token: "stored-jwt", user: authedUser });
+
+    renderApp("/stickers");
+
+    await waitFor(() => expect(currentPath()).toBe("/stickers"));
+    expect(
+      screen.getAllByRole("button", { name: "Crear sticker" }),
+    ).toHaveLength(1);
+  });
+
+  it("renders no 'Crear sticker' button for guests on /login", async () => {
+    renderApp("/login");
+
+    await waitFor(() => expect(currentPath()).toBe("/login"));
+    expect(screen.queryByRole("button", { name: "Crear sticker" })).toBeNull();
+  });
+});
+
+describe("Create sticker flow — R-CRT-06/07 (App integration)", () => {
+  const team = {
+    id: 1,
+    name: "Barcelona",
+    stickers: [
+      {
+        id: 1,
+        number: "001",
+        name: "Lewandowski",
+        positionId: 10,
+        position: "Delantero",
+        check: true,
+        quantity: 1,
+      },
+    ],
+  };
+  const createdSticker = {
+    id: 42,
+    number: "007",
+    name: "Lionel",
+    positionId: 10,
+    position: "Delantero",
+    check: false,
+    quantity: 0,
+  };
+
+  function stubAlbum(createStatus: number, createBody: unknown) {
+    fetchMock.mockImplementation((url: unknown) => {
+      const target = String(url);
+      if (target.includes("/stickers/create")) {
+        return Promise.resolve(jsonResponse(createStatus, createBody));
+      }
+      if (target.includes("/teams")) {
+        return Promise.resolve(jsonResponse(200, [team]));
+      }
+      if (target.includes("/positions")) {
+        return Promise.resolve(
+          jsonResponse(200, [{ id: 10, name: "Delantero" }]),
+        );
+      }
+      return Promise.resolve(jsonResponse(200, []));
+    });
+  }
+
+  async function openAndFill() {
+    fireEvent.click(screen.getByRole("button", { name: "Crear sticker" }));
+    const dialog = await screen.findByRole("dialog");
+    const { getByLabelText } = within(dialog);
+    await waitFor(() => expect(getByLabelText("Número")).toBeTruthy());
+
+    fireEvent.change(getByLabelText("Número"), {
+      target: { value: "007" },
+    });
+    fireEvent.change(getByLabelText("Nombre"), {
+      target: { value: "Lionel" },
+    });
+    fireEvent.change(getByLabelText("Equipo"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(getByLabelText("Posición"), {
+      target: { value: "10" },
+    });
+  }
+
+  it("invalidates ['teams], closes the modal and keeps the album mounted on 201 (no blank flash)", async () => {
+    useAuthStore.setState({ token: "stored-jwt", user: authedUser });
+    stubAlbum(201, createdSticker);
+
+    renderApp("/stickers");
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy(),
+    );
+    const teamsBefore = callCount("/teams");
+
+    await openAndFill();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => expect(callCount("/stickers/create")).toBe(1));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // R-CRT-06: ['teams] is refetched after the create succeeds.
+    await waitFor(() => expect(callCount("/teams")).toBe(teamsBefore + 1));
+    // No blank flash — the useSuspenseQuery album keeps its prior data.
+    expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy();
+  });
+
+  it("keeps the create modal open and surfaces a 400 through the global ErrorModal on top (R-CRT-07)", async () => {
+    useAuthStore.setState({ token: "stored-jwt", user: authedUser });
+    stubAlbum(400, {
+      message: "Validation error",
+      errors: {
+        formErrors: [],
+        fieldErrors: { body: ["positionId inválido"] },
+      },
+    });
+
+    renderApp("/stickers");
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy(),
+    );
+
+    await openAndFill();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    // Global modal (z-50) opens with the normalized message…
+    const error = await screen.findByRole("alertdialog");
+    expect(error.textContent).toContain("positionId inválido");
+    // …while the create dialog stays open with the typed values intact.
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect((screen.getByLabelText("Número") as HTMLInputElement).value).toBe(
+      "007",
     );
   });
 });

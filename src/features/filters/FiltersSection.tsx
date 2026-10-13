@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import FilterBarSkeleton from "@/components/skeletons/FilterBarSkeleton";
 import { useFilterDraft } from "@/hooks/useFilterDraft";
 import { usePositionsQuery } from "@/hooks/usePositionsQuery";
@@ -94,11 +95,10 @@ function FilterControls({
 
       <label className="flex flex-col gap-xs">
         <span className="text-[13px] text-muted-foreground">Equipo</span>
-        <select
+        <Select
           aria-label="Equipo"
           value={draft.teamId}
           onChange={(event) => setFields({ teamId: event.target.value })}
-          className="h-14 w-full rounded-md border border-[var(--color-hairline)] bg-black/40 px-4 text-base text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="">Todos</option>
           {teams.map((team) => (
@@ -106,16 +106,15 @@ function FilterControls({
               {team.name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-xs">
         <span className="text-[13px] text-muted-foreground">Posición</span>
-        <select
+        <Select
           aria-label="Posición"
           value={draft.positionId}
           onChange={(event) => setFields({ positionId: event.target.value })}
-          className="h-14 w-full rounded-md border border-[var(--color-hairline)] bg-black/40 px-4 text-base text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="">Todos</option>
           {positions.map((position) => (
@@ -123,12 +122,12 @@ function FilterControls({
               {position.name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-xs">
         <span className="text-[13px] text-muted-foreground">Estado</span>
-        <select
+        <Select
           aria-label="Estado"
           value={draft.check}
           onChange={(event) =>
@@ -137,12 +136,11 @@ function FilterControls({
               check: event.target.value as FilterDraft["check"],
             })
           }
-          className="h-14 w-full rounded-md border border-[var(--color-hairline)] bg-black/40 px-4 text-base text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="">Todos</option>
           <option value="true">Completados</option>
           <option value="false">Pendientes</option>
-        </select>
+        </Select>
       </label>
 
       <label className="flex items-center gap-sm text-sm md:self-end">

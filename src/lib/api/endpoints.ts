@@ -10,6 +10,7 @@ import {
 } from "@/types/api";
 import type {
   AuthResponse,
+  CreateStickerRequest,
   Position,
   Sticker,
   Team,
@@ -88,4 +89,22 @@ export function patchSticker(
 
 export function getPositions(signal?: AbortSignal): Promise<Position[]> {
   return apiFetch("/positions", { schema: z.array(PositionSchema), signal });
+}
+
+/**
+ * R-CRT-05/07: create a sticker. The body is the type-safe `CreateStickerRequest`
+ * (built by `toRequest`) sent verbatim — no double parse. `surface` defaults
+ * TRUE so a 400/network failure opens the global ErrorModal (R-FBK-02) while the
+ * create modal stays open. 201 validates against `StickerSchema`.
+ */
+export function createSticker(
+  input: CreateStickerRequest,
+  signal?: AbortSignal,
+): Promise<Sticker> {
+  return apiFetch("/stickers/create", {
+    method: "POST",
+    body: input,
+    schema: StickerSchema,
+    signal,
+  });
 }

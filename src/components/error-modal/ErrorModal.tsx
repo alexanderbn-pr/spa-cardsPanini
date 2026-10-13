@@ -28,7 +28,7 @@ export default function ErrorModal() {
       onClick={closeError}
     >
       <div
-        className="max-h-[80dvh] w-full max-w-lg overflow-y-auto rounded-lg border border-[var(--color-hairline)] bg-surface-elevated p-lg sm:p-xxl"
+        className="max-h-[80dvh] w-full  overflow-y-auto rounded-lg border border-[var(--color-hairline)] bg-surface-elevated p-lg sm:p-xxl"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 className="mb-md text-lg font-medium text-danger">Error</h2>

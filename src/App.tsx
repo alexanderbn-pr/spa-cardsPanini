@@ -7,6 +7,7 @@ import ErrorModal from "@/components/error-modal/ErrorModal";
 import RouteErrorBoundary from "@/components/error-boundary/RouteErrorBoundary";
 import AlbumSkeleton from "@/components/skeletons/AlbumSkeleton";
 import FiltersSection from "@/features/filters/FiltersSection";
+import CreateStickerButton from "@/features/stickers/CreateStickerButton";
 import { queryKeys } from "@/lib/api/keys";
 import type { AppliedFilters } from "@/types/filters";
 import Header from "@/features/header/Header";
@@ -75,6 +76,10 @@ export function AppRoutes() {
                 className="mx-auto w-full max-w-[1200px] px-lg py-xl"
               >
                 <RouteErrorBoundary resetKey={pathname}>
+                  <div className="mb-md flex items-center justify-between">
+                    <div />
+                    <CreateStickerButton />
+                  </div>
                   <FiltersSection
                     applied={applied}
                     onApply={setApplied}

@@ -51,6 +51,36 @@ export const AuthResponseSchema = z
   .passthrough();
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
+/**
+ * POST /stickers/create body payload (R-CRT-05). `number` stays a STRING
+ * (zero-padded codes like "007" must survive end-to-end — never numeric coercion).
+ * `positionId` accepts the selector's string OR a typed number and normalizes to
+ * a POSITIVE integer; `quantity`/`check` default to the server's initial state
+ * (0 / false) so an untouched form still produces a complete request.
+ */
+export const CreateStickerBodySchema = z.object({
+  number: z.string().min(1),
+  name: z.string().min(1),
+  positionId: z
+    .union([z.string(), z.number()])
+    .transform(Number)
+    .pipe(z.number().int().positive()),
+  quantity: z.number().int().min(0).default(0),
+  check: z.boolean().default(false),
+});
+export type CreateStickerBody = z.infer<typeof CreateStickerBodySchema>;
+
+/**
+ * POST /stickers/create request envelope: the sticker body + its team FK
+ * (`idTeam`, an existing string|number id). Edition is intentionally OUT of
+ * scope (D5) — FKs are equipo + posición ONLY.
+ */
+export const CreateStickerRequestSchema = z.object({
+  sticker: CreateStickerBodySchema,
+  idTeam: IdSchema,
+});
+export type CreateStickerRequest = z.infer<typeof CreateStickerRequestSchema>;
+
 /** Pinned 400 validation envelope. */
 export const ErrorResponseSchema = z.object({
   message: z.string(),
