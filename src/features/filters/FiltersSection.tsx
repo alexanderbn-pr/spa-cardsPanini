@@ -5,27 +5,36 @@ import FilterBarSkeleton from "@/components/skeletons/FilterBarSkeleton";
 import { useFilterDraft } from "@/hooks/useFilterDraft";
 import { usePositionsQuery } from "@/hooks/usePositionsQuery";
 import { useTeamsQuery } from "@/hooks/useTeamsQuery";
-import { EMPTY_FILTERS, type AppliedFilters, type FilterDraft } from "@/types/filters";
+import {
+  EMPTY_FILTERS,
+  type AppliedFilters,
+  type FilterDraft,
+} from "@/types/filters";
 
 interface FiltersSectionProps {
   /** App-owned committed filters — `null` = nothing applied yet (default teams view). */
   applied: AppliedFilters | null;
   /** Lifts the result of "Aplicar filtros" into App → query key (R-FLT-02). */
   onApply: (next: AppliedFilters) => void;
+  /** R-FLT-05: lifted result of "Limpiar filtros" → App drops the key (ADR-3). */
+  onClear: () => void;
 }
 
 interface FilterControlsProps {
   draft: FilterDraft;
   setFields: (patch: Partial<FilterDraft>) => void;
   onApply: () => void;
+  onClear: () => void;
 }
 
 /**
- * Filter section — R-FLT-01..04. Drafts are LOCAL (`useFilterDraft`); the
+ * Filter section — R-FLT-01..05. Drafts are LOCAL (`useFilterDraft`); the
  * `/stickers` request fires ONLY on "Aplicar filtros" (the click lifts
- * `AppliedFilters` to App). Teams/positions come from the suspense caches, so
- * the first load shows `FilterBarSkeleton` inside this section's own boundary
- * (R-FBK-01) while the album below keeps `AlbumSkeleton`.
+ * `AppliedFilters` to App). "Limpiar filtros" (R-FLT-05) empties the drafts
+ * locally and lifts `onClear` — the App side drops the key WITHOUT issuing any
+ * `/stickers` request (ADR-3). Teams/positions come from the suspense caches,
+ * so the first load shows `FilterBarSkeleton` inside this section's own
+ * boundary (R-FBK-01) while the album below keeps `AlbumSkeleton`.
  *
  * Controls are native `<select>`/`<input type="checkbox">` per design §3
  * anatomy — no new radix wrappers in this work unit.
@@ -33,11 +42,20 @@ interface FilterControlsProps {
 export default function FiltersSection({
   applied,
   onApply,
+  onClear,
 }: FiltersSectionProps) {
-  const { draft, setFields, apply } = useFilterDraft(applied ?? EMPTY_FILTERS);
+  const { draft, setFields, apply, reset } = useFilterDraft(
+    applied ?? EMPTY_FILTERS,
+  );
 
   function handleApply() {
     onApply(apply());
+  }
+
+  /** R-FLT-05: empty the controls FIRST, then lift the reset (key → `null`). */
+  function handleClear() {
+    reset(EMPTY_FILTERS);
+    onClear();
   }
 
   return (
@@ -47,13 +65,19 @@ export default function FiltersSection({
           draft={draft}
           setFields={setFields}
           onApply={handleApply}
+          onClear={handleClear}
         />
       </Suspense>
     </section>
   );
 }
 
-function FilterControls({ draft, setFields, onApply }: FilterControlsProps) {
+function FilterControls({
+  draft,
+  setFields,
+  onApply,
+  onClear,
+}: FilterControlsProps) {
   const { data: teams } = useTeamsQuery();
   const { data: positions } = usePositionsQuery();
 
@@ -132,14 +156,25 @@ function FilterControls({ draft, setFields, onApply }: FilterControlsProps) {
         Repetidos
       </label>
 
-      <Button
-        type="button"
-        variant="light"
-        onClick={onApply}
-        className="h-12 w-full rounded-full lg:ml-auto lg:w-auto"
-      >
-        Aplicar filtros
-      </Button>
+      <div className="flex flex-col gap-sm md:col-span-2 lg:ml-auto lg:flex-row lg:items-center">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onClear}
+          className="h-12 w-full rounded-full text-white lg:w-auto"
+        >
+          Limpiar filtros
+        </Button>
+
+        <Button
+          type="button"
+          variant="light"
+          onClick={onApply}
+          className="h-12 w-full rounded-full lg:w-auto"
+        >
+          Aplicar filtros
+        </Button>
+      </div>
     </div>
   );
 }

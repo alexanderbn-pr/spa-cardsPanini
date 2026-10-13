@@ -7,11 +7,16 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FiltersSection from "./FiltersSection";
 import type { AppliedFilters } from "@/types/filters";
 import { useStickersQuery } from "@/hooks/useStickersQuery";
+import { queryKeys } from "@/lib/api/keys";
 import type { Sticker, Team } from "@/types/api";
 
 const fetchMock = vi.fn();
@@ -46,24 +51,51 @@ const sticker: Sticker = {
 /**
  * Mirrors App's wiring (design §5): `applied` lifted to the parent, the album
  * side driven by `useStickersQuery(applied)` — the exact hook MainScreen uses.
+ * The probe reports which album branch is mounted so "clear → album view" is
+ * observable.
  */
 function AlbumProbe({ applied }: { applied: AppliedFilters | null }) {
   useStickersQuery(applied);
-  return null;
+  return (
+    <div data-testid="album">
+      {applied === null ? "vista por equipos" : "vista filtrada"}
+    </div>
+  );
 }
 
-function Harness({ onApply }: { onApply?: (next: AppliedFilters) => void }) {
+function Harness({
+  onApply,
+  onClear,
+}: {
+  onApply?: (next: AppliedFilters) => void;
+  onClear?: () => void;
+}) {
   const [applied, setApplied] = useState<AppliedFilters | null>(null);
+  const queryClient = useQueryClient();
 
   function handleApply(next: AppliedFilters) {
     onApply?.(next);
     setApplied(next);
   }
 
+  /** Mirrors App's `handleClear` (ADR-3): drop the key + refetch `/teams` only. */
+  function handleClear() {
+    onClear?.();
+    setApplied(null);
+    void queryClient.invalidateQueries({ queryKey: queryKeys.teams });
+  }
+
   return (
     <>
-      <FiltersSection applied={applied} onApply={handleApply} />
+      <FiltersSection
+        applied={applied}
+        onApply={handleApply}
+        onClear={handleClear}
+      />
       <AlbumProbe applied={applied} />
+      <output data-testid="applied-state">
+        {applied === null ? "null" : "set"}
+      </output>
     </>
   );
 }
@@ -88,6 +120,16 @@ function stickerUrls(): string[] {
   return fetchMock.mock.calls
     .map(([url]) => String(url))
     .filter((url) => url.includes("/stickers"));
+}
+
+function teamsUrls(): string[] {
+  return fetchMock.mock.calls
+    .map(([url]) => String(url))
+    .filter((url) => url.includes("/teams"));
+}
+
+function inputValue(label: string): string {
+  return (screen.getByLabelText(label) as HTMLInputElement).value;
 }
 
 async function waitForControls() {
@@ -190,5 +232,49 @@ describe("FiltersSection — R-FLT-02 apply on click only", () => {
     // TRAP (R-FLT-04): repetidos is a CLIENT-SIDE quantity>1 predicate — the API
     // `quantity` param is exact-match only, so it must never appear in the URL.
     expect(url).not.toContain("quantity=");
+  });
+});
+
+describe("FiltersSection — R-FLT-05 Limpiar filtros (ADR-3)", () => {
+  it("empties the drafts, drops applied to null (album returns), fires exactly ONE /teams refetch and ZERO new /stickers", async () => {
+    renderSection();
+    await waitForControls();
+
+    // Apply first so a filtered view + exactly ONE /stickers request exist.
+    fireEvent.change(screen.getByLabelText("Jugador"), {
+      target: { value: "Lewandowski" },
+    });
+    fireEvent.change(screen.getByLabelText("Equipo"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("Estado"), {
+      target: { value: "true" },
+    });
+    fireEvent.click(screen.getByLabelText("Repetidos"));
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
+
+    await waitFor(() => expect(stickerUrls()).toHaveLength(1));
+    expect(screen.getByTestId("applied-state").textContent).toBe("set");
+    expect(screen.getByTestId("album").textContent).toBe("vista filtrada");
+
+    const teamsBefore = teamsUrls().length;
+    const stickersBefore = stickerUrls().length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+
+    // S1 — drafts empty, applied null, default album view renders.
+    await waitFor(() => expect(inputValue("Jugador")).toBe(""));
+    expect(inputValue("Equipo")).toBe("");
+    expect(inputValue("Posición")).toBe("");
+    expect(inputValue("Estado")).toBe("");
+    expect(
+      (screen.getByLabelText("Repetidos") as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(screen.getByTestId("applied-state").textContent).toBe("null");
+    expect(screen.getByTestId("album").textContent).toBe("vista por equipos");
+
+    // S2 — exactly ONE `/teams` refetch, ZERO new `/stickers` requests.
+    await waitFor(() => expect(teamsUrls()).toHaveLength(teamsBefore + 1));
+    expect(stickerUrls()).toHaveLength(stickersBefore);
   });
 });

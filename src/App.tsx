@@ -1,11 +1,13 @@
 import { lazy, Suspense, useState } from "react";
 import { useLocation } from "react-router";
 import { BrowserRouter, Route, Routes } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { PATHS, RequireAuth, RequireGuest, RootRedirect } from "@/app/routes";
 import ErrorModal from "@/components/error-modal/ErrorModal";
 import RouteErrorBoundary from "@/components/error-boundary/RouteErrorBoundary";
 import AlbumSkeleton from "@/components/skeletons/AlbumSkeleton";
 import FiltersSection from "@/features/filters/FiltersSection";
+import { queryKeys } from "@/lib/api/keys";
 import type { AppliedFilters } from "@/types/filters";
 import Header from "@/features/header/Header";
 import LoginScreen from "@/features/auth/LoginScreen";
@@ -35,6 +37,19 @@ const MainScreen = lazy(() => import("@/features/stickers/MainScreen"));
 export function AppRoutes() {
   const [applied, setApplied] = useState<AppliedFilters | null>(null);
   const { pathname } = useLocation();
+  const queryClient = useQueryClient();
+
+  /**
+   * R-FLT-05/ADR-3: "Limpiar filtros" drops the applied key → the default
+   * team-grouped album renders and NO `/stickers` request fires (R-FLT-02
+   * intact, `useStickersQuery` is `enabled:false` again) — then refetches
+   * `/teams` for active consumers. Deliberately NOT `queryClient.clear()`:
+   * that would nuke unrelated cache state (positions/auth-adjacent).
+   */
+  function handleClear() {
+    setApplied(null);
+    void queryClient.invalidateQueries({ queryKey: queryKeys.teams });
+  }
 
   return (
     <Routes>
@@ -60,7 +75,11 @@ export function AppRoutes() {
                 className="mx-auto w-full max-w-[1200px] px-lg py-xl"
               >
                 <RouteErrorBoundary resetKey={pathname}>
-                  <FiltersSection applied={applied} onApply={setApplied} />
+                  <FiltersSection
+                    applied={applied}
+                    onApply={setApplied}
+                    onClear={handleClear}
+                  />
                   <Suspense fallback={<AlbumSkeleton />}>
                     <MainScreen applied={applied} />
                   </Suspense>

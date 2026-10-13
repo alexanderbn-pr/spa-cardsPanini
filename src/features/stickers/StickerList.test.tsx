@@ -110,7 +110,11 @@ function makeQuantitySticker(id: number, quantity: number): Sticker {
   };
 }
 
-function renderFiltered(stickers: Sticker[], repetidos: boolean) {
+function renderFiltered(
+  stickers: Sticker[],
+  repetidos: boolean,
+  teams: Team[],
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -119,10 +123,39 @@ function renderFiltered(stickers: Sticker[], repetidos: boolean) {
   );
   return render(
     <Wrapper>
-      <StickerList stickers={stickers} repetidos={repetidos} />
+      <StickerList teams={teams} stickers={stickers} repetidos={repetidos} />
     </Wrapper>,
   );
 }
+
+/**
+ * ADR-2 spine — SERVER order [Atlético, Barcelona, Real Madrid]. `/stickers`
+ * rows carry NO `teamId`; the sticker `id` is the shared identity with the
+ * `['teams]` cache (the same join `usePatchSticker.writeSticker` performs).
+ * Inner sticker order is deliberately scrambled → grids must re-sort.
+ */
+const groupedTeams: Team[] = [
+  {
+    id: 1,
+    name: "Atlético",
+    stickers: [
+      makeQuantitySticker(3, 2),
+      makeQuantitySticker(1, 0),
+      makeQuantitySticker(2, 1),
+      makeQuantitySticker(4, 3),
+    ],
+  },
+  {
+    id: 2,
+    name: "Barcelona",
+    stickers: [makeQuantitySticker(6, 1), makeQuantitySticker(5, 0)],
+  },
+  {
+    id: 3,
+    name: "Real Madrid",
+    stickers: [makeQuantitySticker(8, 1), makeQuantitySticker(7, 0)],
+  },
+];
 
 /** Results straight from a /stickers page-loop: quantities 0, 1, 2, 3. */
 const filteredResults: Sticker[] = [
@@ -132,26 +165,88 @@ const filteredResults: Sticker[] = [
   makeQuantitySticker(4, 3),
 ];
 
-function visibleCardLabels(): (string | null)[] {
+/** Team sections in render order — `[Equipo X, Equipo Y]` proves the /teams spine. */
+function teamSectionLabels(): (string | null)[] {
   return screen
+    .queryAllByRole("region")
+    .map((el) => el.getAttribute("aria-label"))
+    .filter((label) => label?.startsWith("Equipo ") ?? false);
+}
+
+function cardLabelsIn(container: HTMLElement): (string | null)[] {
+  return within(container)
     .getAllByRole("button")
     .map((el) => el.getAttribute("aria-label"))
     .filter((label): label is string => label?.startsWith("Sticker ") ?? false);
 }
 
-describe("StickerList filtered view — R-FLT-04 repetidos = CLIENT-SIDE quantity > 1", () => {
-  it("displays ONLY stickers with quantity > 1 when repetidos is applied (the API quantity param is exact-match, no gt)", () => {
-    renderFiltered(filteredResults, true);
+describe("StickerList filtered view — R-FLT-06 grouped join onto /teams (ADR-2)", () => {
+  it("renders matched sections in /teams order, hides zero-match teams, keeps FULL header counts and sorts each grid", () => {
+    // Matched ids {1,4,5,6} + id 99 which is ABSENT from /teams (drift → dropped).
+    renderFiltered(
+      [
+        makeQuantitySticker(5, 0),
+        makeQuantitySticker(1, 0),
+        makeQuantitySticker(6, 1),
+        makeQuantitySticker(4, 3),
+        makeQuantitySticker(99, 1),
+      ],
+      false,
+      groupedTeams,
+    );
 
-    // WHY: 0/1 are single copies, 2/3 are "repetidos" — the predicate runs on
-    // the client because the API cannot express quantity > 1.
-    expect(visibleCardLabels()).toEqual(["Sticker 003 S3", "Sticker 004 S4"]);
+    // Landmark kept + sections follow the SERVER order; Real Madrid (zero
+    // matches) is HIDDEN while the survivors keep their exact relative order.
+    const regionLabels = screen
+      .getAllByRole("region")
+      .map((el) => el.getAttribute("aria-label"));
+    expect(regionLabels).toContain("Resultados filtrados");
+    expect(teamSectionLabels()).toEqual([
+      "Equipo Atlético",
+      "Equipo Barcelona",
+    ]);
+
+    const atletico = screen.getByRole("region", { name: "Equipo Atlético" });
+    // R-ALB-02: header keeps the FULL-team fraction (3 of 4 checked), NOT the subset.
+    expect(within(atletico).getByText("3/4")).toBeTruthy();
+    // Grid = only the 2 matches, sorted 001 → 004 by compareStickerNumber.
+    expect(cardLabelsIn(atletico)).toEqual([
+      "Sticker 001 S1",
+      "Sticker 004 S4",
+    ]);
+
+    const barcelona = screen.getByRole("region", { name: "Equipo Barcelona" });
+    expect(within(barcelona).getByText("1/2")).toBeTruthy();
+    expect(cardLabelsIn(barcelona)).toEqual([
+      "Sticker 005 S5",
+      "Sticker 006 S6",
+    ]);
+
+    // Drift guard: a matched row with no /teams counterpart is dropped — no flat fallback.
+    expect(screen.queryByText("099")).toBeNull();
+  });
+
+  it("applies the repetidos quantity > 1 predicate CLIENT-SIDE before the join (R-FLT-04)", () => {
+    renderFiltered(filteredResults, true, groupedTeams);
+
+    // WHY: the API quantity param is exact-match (no gt) → predicate runs here.
+    // matched = {3,4} → only Atlético survives; its header STILL shows 3/4.
+    expect(teamSectionLabels()).toEqual(["Equipo Atlético"]);
+    const atletico = screen.getByRole("region", { name: "Equipo Atlético" });
+    expect(within(atletico).getByText("3/4")).toBeTruthy();
+    expect(cardLabelsIn(atletico)).toEqual([
+      "Sticker 003 S3",
+      "Sticker 004 S4",
+    ]);
   });
 
   it("displays the full result set when repetidos is NOT applied", () => {
-    renderFiltered(filteredResults, false);
+    renderFiltered(filteredResults, false, groupedTeams);
 
-    expect(visibleCardLabels()).toEqual([
+    expect(teamSectionLabels()).toEqual(["Equipo Atlético"]);
+    expect(
+      cardLabelsIn(screen.getByRole("region", { name: "Equipo Atlético" })),
+    ).toEqual([
       "Sticker 001 S1",
       "Sticker 002 S2",
       "Sticker 003 S3",
@@ -160,9 +255,10 @@ describe("StickerList filtered view — R-FLT-04 repetidos = CLIENT-SIDE quantit
   });
 
   it("renders an explicit empty state instead of a blank frame when the predicate matches nothing", () => {
-    renderFiltered([makeQuantitySticker(1, 0)], true);
+    renderFiltered([makeQuantitySticker(1, 0)], true, groupedTeams);
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.getByText(/Sin resultados/)).toBeTruthy();
+    expect(teamSectionLabels()).toEqual([]);
   });
 });

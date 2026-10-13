@@ -11,10 +11,11 @@ interface MainScreenProps {
 }
 
 /**
- * Main album screen — R-ALB-01..04 + R-FLT-03. Totals ALWAYS come from the
+ * Main album screen — R-ALB-01..04 + R-FLT-03/06. Totals ALWAYS come from the
  * single `['teams]` response (bare `/stickers` arrays carry no totals, RK-2).
- * With `applied !== null` the screen switches to the filtered flat view fed by
- * the page-loop query; while that first filtered batch is still in flight the
+ * With `applied !== null` the screen switches to the filtered GROUPED view
+ * (ADR-2: `/stickers` rows joined onto `teams` by id) fed by the page-loop
+ * query; while that first filtered batch is still in flight the
  * `AlbumSkeleton` keeps the frame filled (R-FBK-01, zero blank frames).
  */
 export default function MainScreen({ applied = null }: MainScreenProps) {
@@ -37,6 +38,7 @@ export default function MainScreen({ applied = null }: MainScreenProps) {
         <AlbumSkeleton />
       ) : (
         <StickerList
+          teams={teams}
           stickers={stickersQuery.data}
           repetidos={applied.repetidos}
         />

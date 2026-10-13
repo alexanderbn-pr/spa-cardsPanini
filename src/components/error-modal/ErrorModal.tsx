@@ -24,17 +24,20 @@ export default function ErrorModal() {
       role="alertdialog"
       aria-modal="true"
       aria-label="Error"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-lg"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-md sm:p-lg"
       onClick={closeError}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-[var(--color-hairline)] bg-surface-elevated p-xl"
+        className="max-h-[80dvh] w-full max-w-lg overflow-y-auto rounded-lg border border-[var(--color-hairline)] bg-surface-elevated p-lg sm:p-xxl"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 className="mb-md text-lg font-medium text-danger">Error</h2>
-        <ul className="mb-lg flex flex-col gap-sm">
+        <ul className="mb-lg flex flex-col gap-md">
           {messages.map((message) => (
-            <li key={message} className="text-sm text-muted-foreground">
+            <li
+              key={message}
+              className="break-words text-sm text-muted-foreground"
+            >
               {message}
             </li>
           ))}

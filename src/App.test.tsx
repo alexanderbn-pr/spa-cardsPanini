@@ -59,6 +59,12 @@ function currentPath(): string | null {
   return screen.queryByTestId("location")?.textContent ?? null;
 }
 
+/** Requests counted per path — used by the R-FLT-05 clear assertions. */
+function callCount(path: string): number {
+  return fetchMock.mock.calls.filter(([url]) => String(url).includes(path))
+    .length;
+}
+
 const authedUser = { id: 1, email: "a@b.c" };
 
 beforeEach(() => {
@@ -193,5 +199,76 @@ describe("ErrorModal mounted on both routes — R-RT-04 / R-FBK-02 AC5", () => {
 
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(useUiStore.getState().errorMessages).toBeNull();
+  });
+});
+
+describe("Limpiar filtros — R-FLT-05 (App integration, ADR-3)", () => {
+  const teamSticker = {
+    id: 1,
+    number: "001",
+    name: "Lewandowski",
+    positionId: 10,
+    position: "Delantero",
+    check: true,
+    quantity: 1,
+  };
+
+  it("clears to the default album: drafts empty, applied null, ONE /teams refetch and ZERO new /stickers", async () => {
+    useAuthStore.setState({ token: "stored-jwt", user: authedUser });
+    fetchMock.mockImplementation((url: unknown) => {
+      const target = String(url);
+      if (target.includes("/teams")) {
+        return Promise.resolve(
+          jsonResponse(200, [
+            { id: 1, name: "Barcelona", stickers: [teamSticker] },
+          ]),
+        );
+      }
+      if (target.includes("/positions")) {
+        return Promise.resolve(
+          jsonResponse(200, [{ id: 10, name: "Delantero" }]),
+        );
+      }
+      if (target.includes("/stickers")) {
+        return Promise.resolve(jsonResponse(200, [teamSticker]));
+      }
+      return Promise.resolve(jsonResponse(200, []));
+    });
+
+    renderApp("/stickers");
+
+    // Default album renders from `['teams]` — no /stickers request yet.
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy(),
+    );
+    expect(callCount("/stickers")).toBe(0);
+
+    fireEvent.change(screen.getByLabelText("Jugador"), {
+      target: { value: "Lewandowski" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "Resultados filtrados" }),
+      ).toBeTruthy(),
+    );
+    const teamsBefore = callCount("/teams");
+    const stickersBefore = callCount("/stickers");
+    expect(stickersBefore).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+
+    await waitFor(() => expect(callCount("/teams")).toBe(teamsBefore + 1));
+    expect(callCount("/stickers")).toBe(stickersBefore);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("region", { name: "Resultados filtrados" }),
+      ).toBeNull(),
+    );
+    expect(screen.getByRole("heading", { name: "Barcelona" })).toBeTruthy();
+    expect((screen.getByLabelText("Jugador") as HTMLInputElement).value).toBe(
+      "",
+    );
   });
 });

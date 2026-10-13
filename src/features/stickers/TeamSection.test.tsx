@@ -80,6 +80,42 @@ describe("TeamSection — R-ALB-03 completed badge", () => {
   });
 });
 
+describe("TeamSection — R-ALB-04 alphanumeric natural order (RED pin, S2)", () => {
+  // WHY: the old byNumber hybrid Number("3a") → NaN → localeCompare fallback
+  // puts "10" BEFORE "3a". This pins the exact spec sequence 1, 2, 3a, 3b, 4, 10.
+  it("renders 1, 2, 3a, 3b, 4, 10 — '10' must NOT precede '3a' or '4'", () => {
+    const specs: Array<[string, string]> = [
+      ["4", "Cuatro"],
+      ["10", "Diez"],
+      ["3b", "TresB"],
+      ["1", "Uno"],
+      ["3a", "TresA"],
+      ["2", "Dos"],
+    ];
+    const alphanumeric = makeTeam(
+      specs.map(([number, name], index) => ({
+        ...makeSticker(index + 1, false),
+        number,
+        name,
+      })),
+    );
+
+    renderSection(alphanumeric);
+
+    const labels = screen
+      .getAllByRole("button")
+      .map((el) => el.getAttribute("aria-label"));
+    expect(labels).toEqual([
+      "Sticker 1 Uno",
+      "Sticker 2 Dos",
+      "Sticker 3a TresA",
+      "Sticker 3b TresB",
+      "Sticker 4 Cuatro",
+      "Sticker 10 Diez",
+    ]);
+  });
+});
+
 describe("TeamSection — R-ALB-04 ordering with UNPADDED numbers (verify V1)", () => {
   // WHY: the pinned OpenAPI types `number` as a plain string (example "001")
   // with no padding constraint — a lexicographic sort would render 1, 10, 2.

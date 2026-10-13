@@ -1,30 +1,33 @@
 import StickerCard from "./StickerCard";
-import type { Team } from "@/types/api";
+import { compareStickerNumber } from "@/lib/number-order";
+import type { Sticker, Team } from "@/types/api";
 
 /**
  * R-ALB-02/03/04: team header = name + id + `{checked}/{total}` (or the green
  * rounded "Completed" pill when every sticker is checked, replacing the
  * counts) + the card grid ordered by `number` ascending.
+ *
+ * Ordering delegates to the ONE shared comparator (`src/lib/number-order.ts`,
+ * ADR-4). The previous `byNumber` hybrid (`Number()` + `localeCompare`
+ * fallback) put "10" before "3a" — deleted, not patched.
+ *
+ * `stickers?` (ADR-2, filtered view only): the grid renders this matched
+ * SUBSET, while the header keeps the FULL-team counts (R-ALB-02 under
+ * filtering). Rows absent from `/teams` never reach here — the join in
+ * `StickerList` drops them (`/teams` is the spine).
  */
-/**
- * R-ALB-04 ordering. The OpenAPI schema types `number` as a plain string
- * (example "001") with NO padding guarantee, so a bare `localeCompare` would
- * render unpadded values as 1, 10, 2 — numeric compare with a string fallback
- * is correct under both formats (verify finding V1).
- */
-function byNumber(a: string, b: string): number {
-  const na = Number(a);
-  const nb = Number(b);
-  if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
-  return a.localeCompare(b);
-}
-
-export default function TeamSection({ team }: { team: Team }) {
+export default function TeamSection({
+  team,
+  stickers,
+}: {
+  team: Team;
+  stickers?: Sticker[];
+}) {
   const total = team.stickers.length;
   const checked = team.stickers.filter((sticker) => sticker.check).length;
   const completed = total > 0 && checked === total;
-  const ordered = [...team.stickers].sort((a, b) =>
-    byNumber(a.number, b.number),
+  const ordered = [...(stickers ?? team.stickers)].sort((a, b) =>
+    compareStickerNumber(a.number, b.number),
   );
 
   return (
