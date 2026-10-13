@@ -82,7 +82,7 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
         ×{quantity}
       </span>
 
-      {quantity > 1 && (
+      {quantity > 0 && (
         <button
           type="button"
           aria-label="Eliminar sticker"
