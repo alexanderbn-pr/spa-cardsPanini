@@ -45,9 +45,9 @@ describe("ErrorModal — R-FBK-02 global error surface", () => {
     );
 
     await expect(getTeams()).rejects.toBeTruthy();
-    expect(
-      useUiStore.getState().errorMessages,
-    ).toEqual(["Internal server error"]);
+    expect(useUiStore.getState().errorMessages).toEqual([
+      "Internal server error",
+    ]);
 
     render(<ErrorModal />);
     expect(screen.getByText("Internal server error")).toBeTruthy();

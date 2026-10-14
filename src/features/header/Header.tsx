@@ -1,6 +1,6 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router";
-import logoUrl from "@/assets/react.svg";
+import logoUrl from "@/assets/logoApp.webp";
 import { useAuthStore } from "@/stores/auth";
 
 /**
