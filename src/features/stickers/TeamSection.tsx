@@ -1,6 +1,8 @@
+import { useState } from "react";
 import StickerCard from "./StickerCard";
 import { compareStickerNumber } from "@/lib/number-order";
 import type { Sticker, Team } from "@/types/api";
+import { ChevronDown } from "lucide-react";
 
 /**
  * R-ALB-02/03/04: team header = name + id + `{checked}/{total}` (or the green
@@ -15,6 +17,11 @@ import type { Sticker, Team } from "@/types/api";
  * SUBSET, while the header keeps the FULL-team counts (R-ALB-02 under
  * filtering). Rows absent from `/teams` never reach here — the join in
  * `StickerList` drops them (`/teams` is the spine).
+ *
+ * D2–D5: sticker toggle — click team name → grid collapses/hides with animation;
+ * click again → reopens. Local `useState` `isExpanded` (no Zustand). Chevron
+ * rotates 180° on toggle. StickerCard unchanged — only parent container height
+ * animates.
  */
 export default function TeamSection({
   team,
@@ -23,6 +30,7 @@ export default function TeamSection({
   team: Team;
   stickers?: Sticker[];
 }) {
+  const [isExpanded, setIsExpanded] = useState(true); // starts expanded; first click collapses
   const total = team.stickers.length;
   const checked = team.stickers.filter((sticker) => sticker.check).length;
   const completed = total > 0 && checked === total;
@@ -32,7 +40,12 @@ export default function TeamSection({
 
   return (
     <section aria-label={`Equipo ${team.name}`}>
-      <div className="flex items-center gap-sm border-b border-[var(--color-hairline)] py-md">
+      <div
+        className="flex items-center gap-sm border-b border-[var(--color-hairline)] py-md"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        tabIndex={0}
+        aria-expanded={isExpanded}
+      >
         <h2 className="text-xl font-medium md:text-2xl">{team.name}</h2>
         <span className="text-[13px] text-muted-foreground">{team.id}</span>
 
@@ -47,9 +60,14 @@ export default function TeamSection({
             </span>
           )}
         </span>
+        <ChevronDown className={isExpanded ? "rotate-180" : ""} />
       </div>
 
-      <div className="grid grid-cols-2 gap-md pt-lg md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div
+        className={`grid grid-cols-2 gap-md pt-lg md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ${
+          isExpanded ? "max-h-64" : "max-h-0"
+        } overflow-hidden transition-all duration-300`}
+      >
         {ordered.map((sticker) => (
           <StickerCard key={sticker.id} sticker={sticker} />
         ))}
