@@ -62,9 +62,12 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
     "relative min-h-24 cursor-pointer rounded-md border p-md transition-colors",
     "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
   ];
-  const checkClasses = check
-    ? "border-success bg-success/8"
-    : "border-[var(--color-hairline)] bg-surface-elevated";
+  const checkClasses =
+    quantity > 1
+      ? "border-warning bg-warning/8"
+      : check
+        ? "border-success bg-success/8"
+        : "border-[var(--color-hairline)] bg-surface-elevated";
 
   return (
     <div

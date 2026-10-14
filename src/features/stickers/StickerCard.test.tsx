@@ -84,9 +84,25 @@ beforeEach(() => {
   useUiStore.setState({ errorMessages: null });
 });
 
-describe("StickerCard — R-ALB-04 green border comes from the SERVER's check field", () => {
-  it("carries the green border IFF check === true, and no other card state implies it", () => {
-    const checked = renderCard({ check: true });
+describe("StickerCard — R-ALB-04 border color priority: quantity > 1 overrides check field", () => {
+  it("quantity > 1 produces amber border regardless of check field value", () => {
+    // When quantity > 1, amber border takes priority over check
+    const amberChecked = renderCard({ check: true, quantity: 2 });
+    expect(
+      screen.getByRole("button", { name: "Sticker 001 Lionel Messi" })
+        .className,
+    ).toContain("border-warning");
+    amberChecked.unmount();
+
+    const amberUnchecked = renderCard({ check: false, quantity: 3 });
+    expect(
+      screen.getByRole("button", { name: "Sticker 001 Lionel Messi" })
+        .className,
+    ).toContain("border-warning");
+  });
+
+  it("carries the green border IFF check === true AND quantity <= 1", () => {
+    const checked = renderCard({ check: true, quantity: 1 });
     expect(
       screen.getByRole("button", { name: "Sticker 001 Lionel Messi" })
         .className,

@@ -47,8 +47,6 @@ export default function TeamSection({
         aria-expanded={isExpanded}
       >
         <h2 className="text-xl font-medium md:text-2xl">{team.name}</h2>
-        <span className="text-[13px] text-muted-foreground">{team.id}</span>
-
         <span className="ml-auto">
           {completed ? (
             <span className="rounded-full border border-success px-3 py-1 text-[13px] tracking-[0.24px] text-success">
