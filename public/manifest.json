@@ -1,0 +1,20 @@
+{
+  "short_name": "SPA Cards Panini",
+  "name": "SPA Cards Panini",
+  "icons": [
+    {
+      "src": "/logoApp.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "/logoApp.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ],
+  "start_url": "/?install=true",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
