@@ -65,7 +65,7 @@ export default function TeamSection({
 
       <div
         className={`grid grid-cols-2 gap-md pt-lg md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ${
-          isExpanded ? "max-h-64" : "max-h-0"
+          isExpanded ? "" : "max-h-0"
         } overflow-hidden transition-all duration-300`}
       >
         {ordered.map((sticker) => (

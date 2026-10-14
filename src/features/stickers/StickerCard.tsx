@@ -40,15 +40,19 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
       <span
         key="edition-bullets"
         className="rounded-full px-2 text-[11px] bg-green-500 ml-1"
-      >{abbreviation}</span>
+      >
+        {abbreviation}
+      </span>
     );
   } else if (editionId === 3) {
     editionBullet = (
       <span
         key="edition-bullets"
         className="rounded-full px-2 text-[11px] bg-blue-500 ml-1"
-      >      {abbreviation}</span>
-
+      >
+        {" "}
+        {abbreviation}
+      </span>
     );
   }
   // editionId === "1" → skip badge entirely (no border, no bullet)
@@ -74,7 +78,9 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
         .join(" ")}
     >
       <div className="flex flex-row gap-sm">
-        <span className="block text-[13px] text-muted-foreground">{number}</span>
+        <span className="block text-[13px] text-muted-foreground">
+          {number}
+        </span>
         {editionBullet}
       </div>
       <span className="block truncate text-sm font-medium">{name}</span>
