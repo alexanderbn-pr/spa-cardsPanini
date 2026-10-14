@@ -76,6 +76,7 @@
   --color-success: #428619;
   --color-success-strong: #006400;
   --color-danger: #e23b4a;
+  --color-warning: #f59e0b;
 }
 
 /* Dark-only lock: ONE dark palette under :root, no light counterpart, no toggle. */
