@@ -94,7 +94,6 @@ describe("StickerCard — R-ALB-04 border color priority: quantity > 1 overrides
     ).toContain("border-warning");
     amberChecked.unmount();
 
-    const amberUnchecked = renderCard({ check: false, quantity: 3 });
     expect(
       screen.getByRole("button", { name: "Sticker 001 Lionel Messi" })
         .className,
