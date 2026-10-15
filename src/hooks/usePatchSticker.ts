@@ -14,7 +14,7 @@ export interface PatchStickerVars {
 }
 
 interface RollbackContext {
-  prevTeams: Team[] | undefined;
+  prevTeams: Array<[QueryKey, Team[]]>;
   prevStickers: Array<[QueryKey, Sticker[]]>;
 }
 
@@ -31,8 +31,10 @@ function mapById(
 
 /**
  * Write-through: updates the sticker in EVERY cache that can hold it — all
- * `['stickers', …]` entries and the nested stickers of `['teams]` — so the
- * card, the team counts and the percentage bar all move together (design §4).
+ * `['stickers', …]` entries and EVERY `['teams', …]` entry (the teams key is
+ * collection-scoped, `['teams', collectionId]`, so a PREFIX match is required —
+ * `setQueryData` matches the key EXACTLY and would miss the scoped entries).
+ * This keeps the card, the team counts and the percentage bar in lockstep.
  */
 function writeSticker(
   client: QueryClient,
@@ -42,7 +44,7 @@ function writeSticker(
   client.setQueriesData<Sticker[]>({ queryKey: ["stickers"] }, (prev) =>
     prev === undefined ? prev : mapById(prev, id, next),
   );
-  client.setQueryData<Team[]>(queryKeys.teams, (prev) =>
+  client.setQueriesData<Team[]>({ queryKey: queryKeys.teams }, (prev) =>
     prev === undefined
       ? prev
       : prev.map((team) => ({
@@ -79,7 +81,9 @@ export function usePatchSticker() {
       await client.cancelQueries({ queryKey: queryKeys.teams });
       await client.cancelQueries({ queryKey: ["stickers"] });
 
-      const prevTeams = client.getQueryData<Team[]>(queryKeys.teams);
+      const prevTeams = client
+        .getQueriesData<Team[]>({ queryKey: queryKeys.teams })
+        .filter((entry): entry is [QueryKey, Team[]] => entry[1] !== undefined);
       const prevStickers = client
         .getQueriesData<Sticker[]>({ queryKey: ["stickers"] })
         .filter(
@@ -96,9 +100,9 @@ export function usePatchSticker() {
 
     onError: (_error, _vars, context) => {
       if (context === undefined) return;
-      if (context.prevTeams !== undefined) {
-        client.setQueryData(queryKeys.teams, context.prevTeams);
-      }
+      context.prevTeams.forEach(([key, data]) => {
+        client.setQueryData(key, data);
+      });
       context.prevStickers.forEach(([key, data]) => {
         client.setQueryData(key, data);
       });

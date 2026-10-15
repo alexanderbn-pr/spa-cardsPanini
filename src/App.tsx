@@ -7,6 +7,7 @@ import ErrorModal from "@/components/error-modal/ErrorModal";
 import RouteErrorBoundary from "@/components/error-boundary/RouteErrorBoundary";
 import AlbumSkeleton from "@/components/skeletons/AlbumSkeleton";
 import FiltersSection from "@/features/filters/FiltersSection";
+import CollectionTab from "@/features/collections/CollectionTab";
 import CreateStickerButton from "@/features/stickers/CreateStickerButton";
 import { queryKeys } from "@/lib/api/keys";
 import type { AppliedFilters } from "@/types/filters";
@@ -76,8 +77,8 @@ export function AppRoutes() {
                 className="mx-auto w-full max-w-[1200px] px-lg py-xl"
               >
                 <RouteErrorBoundary resetKey={pathname}>
-                  <div className="mb-md flex items-center justify-between">
-                    <div />
+                  <div className="mb-md flex items-center justify-between gap-md">
+                    <CollectionTab />
                     <CreateStickerButton />
                   </div>
                   <FiltersSection

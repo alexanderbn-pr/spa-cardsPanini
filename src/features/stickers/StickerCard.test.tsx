@@ -47,7 +47,13 @@ function renderCard(overrides: Partial<Sticker> = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
-  client.setQueryData(queryKeys.teams, teamsWith(sticker));
+  // The teams cache key is collection-scoped `['teams', collectionId]`; no
+  // collection is selected in this harness, so it is `['teams', null]`.
+  client.setQueryData([...queryKeys.teams, null], teamsWith(sticker));
+  // `useTeamsQuery` now derives the effective collection via `useSelectedCollectionId`,
+  // which suspends on `/collection`. Seed that cache (empty → effective id = null)
+  // so this presentational harness issues no extra request.
+  client.setQueryData(queryKeys.collections, []);
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
