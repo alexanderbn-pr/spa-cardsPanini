@@ -1,10 +1,10 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router";
-import logoUrl from "@/assets/logoApp.webp";
+import logoUrl from "@/assets/cromoteca.png";
 import { useAuthStore } from "@/stores/auth";
 
 /**
- * Top bar — R-HDR-01/02/03 + R-RT-03: logo + "Stickers ligaE" + logout.
+ * Top bar — R-HDR-01/02/03 + R-RT-03: logo + "Cromoteca" + logout.
  * Rendered by App ONLY inside the `/stickers` route layout, never on
  * `/login` — visibility is route-driven, not token-driven.
  *
@@ -29,13 +29,13 @@ export default function Header() {
         <div className="flex items-center gap-sm">
           <img
             src={logoUrl}
-            alt="Logo de Stickers ligaE"
+            alt="Logo de Cromoteca"
             width={28}
             height={28}
             className="size-7 rounded-full"
           />
           <span className="text-lg font-medium tracking-[-1%] md:text-xl">
-            Stickers ligaE
+            Cromoteca
           </span>
         </div>
 
