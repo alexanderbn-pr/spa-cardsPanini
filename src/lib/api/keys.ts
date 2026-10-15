@@ -7,4 +7,5 @@ export const queryKeys = {
     ["stickers", filters, page] as const,
   editions: ["editions"] as const,
   positions: ["positions"] as const,
+  collections: ["collections"] as const,
 } as const;

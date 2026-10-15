@@ -9,6 +9,19 @@ export const EditionSchema = z.object({
 });
 export type Edition = z.infer<typeof EditionSchema>;
 
+/**
+ * Collection as returned by `GET /collection` (OpenAPI: CollectionResponse).
+ * NOTE: a collection is NOT an edition — it carries `name` + a `completed`
+ * flag. Teams belong to a collection via `TeamSchema.collectionId`, which is
+ * what `GET /teams?collectionId=X` filters on (NOT the sticker `editionId`).
+ */
+export const CollectionSchema = z.object({
+  id: IdSchema,
+  name: z.string(),
+  completed: z.boolean().optional(),
+});
+export type Collection = z.infer<typeof CollectionSchema>;
+
 export const StickerSchema = z.object({
   id: IdSchema,
   /** Zero-padded code ("001") — kept as string, rendered as-is. */
@@ -28,6 +41,8 @@ export type Sticker = z.infer<typeof StickerSchema>;
 export const TeamSchema = z.object({
   id: IdSchema,
   name: z.string(),
+  /** Team → collection affiliation — the server-side `?collectionId=` filter key. */
+  collectionId: z.number().nullable().optional(),
   /** Teams come with nested stickers → percentage + grouping from one call. */
   stickers: z.array(StickerSchema),
 });

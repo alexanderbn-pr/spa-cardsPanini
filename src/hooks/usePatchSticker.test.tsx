@@ -102,6 +102,38 @@ describe("usePatchSticker — R-INT-01 optimistic write-through", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
+  it("write-through updates the SCOPED ['teams', <id>] entry — prefix match, not exact key (W2)", async () => {
+    const { client, result } = setup();
+    // The album cache is collection-scoped in the real app — seed ONLY the
+    // scoped entry, never the exact base key.
+    const scopedKey = [...queryKeys.teams, 1] as const;
+    client.setQueryData(scopedKey, makeTeams());
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        id: 10,
+        number: "001",
+        name: "Lionel",
+        positionId: null,
+        position: null,
+        check: true,
+        quantity: 3,
+      }),
+    );
+
+    act(() => {
+      result.current.mutate({ id: 10, delta: 1 });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const scoped = client.getQueryData<Team[]>(scopedKey) ?? [];
+    expect(scoped[0]?.stickers[0]?.quantity).toBe(3);
+    // The exact `['teams']` base key was never seeded: an exact `setQueryData`
+    // on it would have been a silent no-op. The update landed ONLY because the
+    // write matches by PREFIX (`setQueriesData`).
+    expect(client.getQueryData(queryKeys.teams)).toBeUndefined();
+  });
+
   it("sends ONLY {delta} in the PATCH body — never check or quantity (R-INT-03 server ownership)", async () => {
     const { result } = setup();
     fetchMock.mockResolvedValue(

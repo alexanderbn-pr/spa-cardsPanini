@@ -3,6 +3,7 @@ import { apiFetch } from "./client";
 import { buildStickersQuery, type StickersFilters } from "./query-string";
 import {
   AuthResponseSchema,
+  CollectionSchema,
   EditionSchema,
   PositionSchema,
   StickerSchema,
@@ -11,6 +12,7 @@ import {
 } from "@/types/api";
 import type {
   AuthResponse,
+  Collection,
   CreateStickerRequest,
   Edition,
   Position,
@@ -59,9 +61,17 @@ export function register(
   });
 }
 
-/** Teams come with nested stickers → album grouping + percentage from ONE call. */
-export function getTeams(signal?: AbortSignal): Promise<Team[]> {
-  return apiFetch("/teams", { schema: z.array(TeamSchema), signal });
+/**
+ * Teams come with nested stickers → album grouping + percentage from ONE call.
+ * When `collectionId` is set the request is scoped to that collection
+ * (`/teams?collectionId=<id>`); otherwise the full roster is returned.
+ */
+export function getTeams(
+  collectionId?: number | null,
+  signal?: AbortSignal,
+): Promise<Team[]> {
+  const query = collectionId != null ? `?collectionId=${collectionId}` : "";
+  return apiFetch(`/teams${query}`, { schema: z.array(TeamSchema), signal });
 }
 
 export function getStickers(
@@ -95,6 +105,15 @@ export function getEditions(signal?: AbortSignal): Promise<Edition[]> {
 
 export function getPositions(signal?: AbortSignal): Promise<Position[]> {
   return apiFetch("/positions", { schema: z.array(PositionSchema), signal });
+}
+
+/**
+ * `GET /collection` → collections (OpenAPI: CollectionResponse). A collection
+ * is `{ id, name, completed? }` — NOT an edition. Selecting one scopes
+ * `/teams?collectionId=<id>` (see `getTeams`).
+ */
+export function getCollections(signal?: AbortSignal): Promise<Collection[]> {
+  return apiFetch("/collection", { schema: z.array(CollectionSchema), signal });
 }
 
 /**
