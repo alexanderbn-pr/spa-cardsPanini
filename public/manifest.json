@@ -1,14 +1,14 @@
 {
-  "short_name": "Cards Panini",
-  "name": "Cards Panini",
+  "short_name": "Cromoteca",
+  "name": "Cromoteca",
   "icons": [
     {
-      "src": "/logoApp.webp",
+      "src": "/cromoteca.png",
       "sizes": "192x192",
       "type": "image/webp"
     },
     {
-      "src": "/logoApp.webp",
+      "src": "/cromoteca.png",
       "sizes": "512x512",
       "type": "image/webp"
     }

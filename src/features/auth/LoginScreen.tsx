@@ -20,7 +20,7 @@ export default function LoginScreen() {
     <main className="grid min-h-svh place-items-center bg-background p-lg">
       <section className="w-full max-w-[400px] rounded-lg bg-surface-elevated p-xxl">
         <h1 className="mb-xl text-center text-2xl font-medium tracking-[-1%]">
-          Stickers ligaE
+          Cromoteca
         </h1>
 
         {mode === "login" ? (

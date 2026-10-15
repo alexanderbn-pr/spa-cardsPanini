@@ -65,8 +65,8 @@ describe("Header — R-HDR-01 contents on /stickers (R-RT-03 AC4)", () => {
     renderApp("/stickers");
 
     const banner = screen.getByRole("banner");
-    expect(banner.textContent).toContain("Stickers ligaE");
-    expect(screen.getByAltText("Logo de Stickers ligaE")).toBeTruthy();
+    expect(banner.textContent).toContain("Cromoteca");
+    expect(screen.getByAltText("Logo de Cromoteca")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cerrar sesión" })).toBeTruthy();
     expect(screen.getByTestId("location").textContent).toBe("/stickers");
   });
