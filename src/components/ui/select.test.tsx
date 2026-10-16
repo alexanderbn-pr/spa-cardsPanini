@@ -36,4 +36,33 @@ describe("Select — R-CRT-08 native styled control", () => {
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  it('variant="pill" applies the pill design tokens without the default chrome (R2, R7)', () => {
+    render(
+      <Select variant="pill" aria-label="Colecciones" defaultValue="1">
+        <option value="1">Mundial 2022</option>
+      </Select>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Colecciones" });
+    for (const token of [
+      "h-9",
+      "rounded-full",
+      "bg-primary",
+      "px-lg",
+      "text-sm",
+      "font-bold",
+      "text-primary-foreground",
+      "tracking-[0.24px]",
+      "whitespace-nowrap",
+    ]) {
+      expect(select.className).toContain(token);
+    }
+    // Empty CVA base: the pill must NOT inherit the default's heavy chrome
+    // (shared base would leak these via twMerge non-conflict — design D1).
+    expect(select.className).not.toContain("h-14");
+    expect(select.className).not.toContain("w-full");
+    expect(select.className).not.toContain("bg-black/40");
+    expect(select.className).not.toContain("border");
+  });
 });
