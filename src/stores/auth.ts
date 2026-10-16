@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { UserResponse } from "@/types/api";
 
 export interface AuthUser {
   id: string | number;
@@ -11,15 +10,10 @@ export interface AuthUser {
 interface AuthState {
   token: string | null;
   user: AuthUser | null;
-  setSession: (token: string, user: AuthUser) => void;
+  expiresAt: number | null;
+  setSession: (token: string, user: AuthUser, expiresIn?: number) => void;
   logout: () => void;
 }
-
-export const fromUserResponse = (user: UserResponse): AuthUser => ({
-  id: user.id,
-  email: user.email,
-  role: user.role,
-});
 
 /**
  * Session store: JWT + user persisted to localStorage under `ligae-auth` so a
@@ -31,8 +25,14 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
-      setSession: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
+      expiresAt: null,
+      setSession: (token, user, expiresIn?) =>
+        set({
+          token,
+          user,
+          expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
+        }),
+      logout: () => set({ token: null, user: null, expiresAt: null }),
     }),
     {
       name: "ligae-auth",

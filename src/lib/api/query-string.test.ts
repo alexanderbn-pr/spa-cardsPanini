@@ -32,4 +32,22 @@ describe("buildStickersQuery shapes GET /stickers per the pinned API contract (R
       "?page=1&limit=100&teamId=2&name=CR7&positionId=5",
     );
   });
+
+  it("serializes collectionId — the API now REQUIRES it on GET /stickers", () => {
+    expect(buildStickersQuery({ collectionId: 7 }, 0)).toBe(
+      "?page=0&limit=100&collectionId=7",
+    );
+    expect(buildStickersQuery({ teamId: 2, collectionId: 7 }, 0)).toBe(
+      "?page=0&limit=100&teamId=2&collectionId=7",
+    );
+  });
+
+  it("omits collectionId when undefined or null — no collection selected yet", () => {
+    expect(buildStickersQuery({ collectionId: undefined }, 0)).toBe(
+      "?page=0&limit=100",
+    );
+    expect(buildStickersQuery({ collectionId: null }, 0)).toBe(
+      "?page=0&limit=100",
+    );
+  });
 });
