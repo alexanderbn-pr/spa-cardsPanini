@@ -76,7 +76,9 @@ function LoginForm() {
     setSubmitting(true);
     try {
       const session = await login(parsed.data);
-      useAuthStore.getState().setSession(session.token, session.user);
+      useAuthStore
+        .getState()
+        .setSession(session.token, session.user, session.expiresIn);
     } catch (error) {
       const inline = toInlineErrors(error);
       if (inline !== null) setErrors(inline);

@@ -18,7 +18,9 @@ const selectVariants = cva("", {
       default:
         "h-14 w-full rounded-md border border-[var(--color-hairline)] bg-black/40 px-4 text-base text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
       // DESIGN `collections-selector`: 36px blue/white pill on the dark sub-nav.
-      pill: "h-9 rounded-full bg-primary px-lg text-sm font-bold text-primary-foreground tracking-[0.24px] whitespace-nowrap",
+      // Asymmetric padding: `pl-lg pr-sm` keeps the left inset but tightens the
+      // text-to-arrow gap (the OS already reserves space for the chevron).
+      pill: "h-9 rounded-full bg-primary pl-lg pr-sm text-sm font-bold text-primary-foreground tracking-[0.24px] whitespace-nowrap",
     },
   },
   defaultVariants: {

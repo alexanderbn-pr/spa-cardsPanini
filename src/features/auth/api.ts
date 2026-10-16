@@ -61,6 +61,7 @@ function extractUser(response: unknown, fallbackEmail: string): AuthUser {
 export interface LoginSession {
   token: string;
   user: AuthUser;
+  expiresIn?: number;
 }
 
 /** POST /auth/login → `{email,password}` body, token isolated above. `surface:false` keeps 400 field errors inline (R-AUTH-03). */
@@ -72,7 +73,11 @@ export async function login(
   if (token === null) {
     throw new ApiError(500, { messages: ["Respuesta inválida del servidor"] });
   }
-  return { token, user: extractUser(response, credentials.email) };
+  const expiresIn =
+    typeof response === "object" && response !== null && "expiresIn" in response
+      ? Number(response.expiresIn)
+      : undefined;
+  return { token, user: extractUser(response, credentials.email), expiresIn };
 }
 
 /** POST /auth/register — `passwordRepeat` never leaves the client (R-AUTH-02). */
