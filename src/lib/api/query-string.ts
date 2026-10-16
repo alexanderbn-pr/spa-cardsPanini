@@ -3,11 +3,10 @@ export interface StickersFilters {
   teamId?: string | number;
   name?: string;
   positionId?: string | number;
-  /** Serialized as the strings "true"/"false" — the API takes enum strings, not booleans. */
   check?: boolean;
-  /** Exact-match only on the API (no gt operator) — never used for "repetidos". */
   quantity?: number;
   editionId?: string | number;
+  collectionId?: number | null;
 }
 
 /**
@@ -39,6 +38,9 @@ export function buildStickersQuery(
   }
   if (filters.editionId !== undefined && filters.editionId !== "") {
     params.set("editionId", String(filters.editionId));
+  }
+  if (filters.collectionId !== undefined && filters.collectionId !== null) {
+    params.set("collectionId", String(filters.collectionId));
   }
 
   return `?${params.toString()}`;

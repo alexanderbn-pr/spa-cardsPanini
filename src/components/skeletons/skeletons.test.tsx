@@ -17,7 +17,7 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 /** Every fetch hangs until the test resolves it — models the first slow load. */
-let pending: Array<(response: Response) => void> = [];
+let pending: Array<{ url: string; resolve: (response: Response) => void }> = [];
 
 function renderApp() {
   const client = new QueryClient({
@@ -43,7 +43,10 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset();
   fetchMock.mockImplementation(
-    () => new Promise<Response>((resolve) => pending.push(resolve)),
+    (url: unknown) =>
+      new Promise<Response>((resolve) =>
+        pending.push({ url: String(url), resolve }),
+      ),
   );
 });
 
@@ -68,7 +71,16 @@ describe("R-FBK-01 Suspense skeletons — zero blank frames", () => {
     for (let round = 0; round < 10; round++) {
       const inFlight = pending.splice(0);
       if (inFlight.length === 0) break;
-      inFlight.forEach((resolve) => resolve(jsonResponse(200, [])));
+      inFlight.forEach(({ url, resolve }) => {
+        // `/collection` resolves with a REAL collection — the suspense chain
+        // `/collection` → `/teams?collectionId=1` must resolve properly, and the
+        // effective collection (first one) scopes the teams request.
+        if (url.includes("/collection")) {
+          resolve(jsonResponse(200, [{ id: 1, name: "Liga" }]));
+        } else {
+          resolve(jsonResponse(200, []));
+        }
+      });
       // let React + react-query flush so a follow-up request can be issued
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
