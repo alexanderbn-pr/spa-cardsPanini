@@ -3,7 +3,6 @@ import { Navigate } from "react-router";
 import { useAuthStore } from "@/stores/auth";
 import { useEffect } from "react";
 
-
 export const PATHS = {
   login: "/login",
   stickers: "/stickers",

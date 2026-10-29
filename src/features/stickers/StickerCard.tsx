@@ -55,6 +55,17 @@ export default function StickerCard({ sticker }: { sticker: Sticker }) {
       </span>
     );
   }
+  else if (editionId === 4) {
+    editionBullet = (
+      <span
+        key="edition-bullets"
+        className="rounded-full px-2 text-[11px] bg-purple-500 ml-1"
+      >
+        {" "}
+        {abbreviation}
+      </span>
+    );
+  }
   // editionId === "1" → skip badge entirely (no border, no bullet)
 
   // Build className: base + edition border (outermost) + check border (beneath)
